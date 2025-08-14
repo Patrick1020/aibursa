@@ -82,7 +82,15 @@ def _ensure_operation_ids(spec: Dict[str, Any]) -> None:
         if not isinstance(item, dict):
             continue
         for method, op in item.items():
-            if method.lower() not in ("get", "post", "put", "patch", "delete", "options", "head"):
+            if method.lower() not in (
+                "get",
+                "post",
+                "put",
+                "patch",
+                "delete",
+                "options",
+                "head",
+            ):
                 continue
             if not isinstance(op, dict):
                 continue
@@ -150,7 +158,11 @@ def _patch_request_bodies(spec: Dict[str, Any]) -> None:
                 # dacă nu există content, punem unul "application/json" gol dar valid
                 req["content"] = {
                     "application/json": {
-                        "schema": {"type": "object", "properties": {}, "additionalProperties": True}
+                        "schema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": True,
+                        }
                     }
                 }
                 continue

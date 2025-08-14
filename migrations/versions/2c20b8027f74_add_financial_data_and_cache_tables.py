@@ -59,7 +59,10 @@ def upgrade() -> None:
         unique=False,
     )
     op.create_index(
-        op.f("ix_stock_predictions_symbol"), "stock_predictions", ["symbol"], unique=False
+        op.f("ix_stock_predictions_symbol"),
+        "stock_predictions",
+        ["symbol"],
+        unique=False,
     )
     op.create_index("ix_symbol_date", "stock_predictions", ["symbol", "published_at"], unique=False)
     op.drop_table("predictions")

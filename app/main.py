@@ -239,13 +239,22 @@ async def assistant_ask(payload: AskPayload):
 
     while True:
         run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-        if run.status in ("completed", "failed", "cancelled", "expired", "requires_action"):
+        if run.status in (
+            "completed",
+            "failed",
+            "cancelled",
+            "expired",
+            "requires_action",
+        ):
             break
         _t.sleep(0.8)
 
     if run.status != "completed":
         return JSONResponse(
-            {"error": f"run status {run.status}", "details": getattr(run, "last_error", None)},
+            {
+                "error": f"run status {run.status}",
+                "details": getattr(run, "last_error", None),
+            },
             status_code=500,
         )
 
@@ -442,7 +451,10 @@ async def healthz() -> dict:
     return {
         "status": "ok" if db_ok and sch_ok else "degraded",
         "time": datetime.now(timezone.utc).isoformat(),
-        "components": {"db": "up" if db_ok else "down", "scheduler": "up" if sch_ok else "down"},
+        "components": {
+            "db": "up" if db_ok else "down",
+            "scheduler": "up" if sch_ok else "down",
+        },
         "version": getattr(app, "version", "unknown"),
     }
 
@@ -625,7 +637,7 @@ async def backtest_dashboard(request: Request):
 
     df = pd.read_csv(csv_path)
     total = len(df)
-    correct = (df["direction_correct"] == True).sum()
+    correct = (df["direction_correct"] is True).sum()
     avg_error = df["error"].mean()
     content = f"""
     <h1>Rezultate Backtest AI</h1>
@@ -789,9 +801,7 @@ async def ask_assistant(prompt: str = Body(..., embed=True)):
         client.beta.threads.messages.create(thread_id=thread.id, role="user", content=prompt)
 
         # 3) rulăm assistant-ul pe thread
-        run = client.beta.threads.runs.create_and_poll(
-            thread_id=thread.id, assistant_id=assistant_id
-        )
+        client.beta.threads.runs.create_and_poll(thread_id=thread.id, assistant_id=assistant_id)
 
         # 4) extragem ultimul mesaj
         msgs = client.beta.threads.messages.list(thread_id=thread.id)

@@ -13,7 +13,14 @@ from dotenv import load_dotenv
 from dateutil.parser import parse as parse_date
 
 # --- Bloc A: OpenAI v1 client & erori ---
-from openai import OpenAI, APIError, APIConnectionError, RateLimitError, BadRequestError, Timeout
+from openai import (
+    OpenAI,
+    APIError,
+    APIConnectionError,
+    RateLimitError,
+    BadRequestError,
+    Timeout,
+)
 
 
 from .models import StockPrediction, HistoricalImpact
@@ -301,7 +308,12 @@ def fetch_financial_data(symbol):
 def fetch_technicals(symbol):
     # Poți folosi AlphaVantage sau alt API real aici!
     # Pentru demo:
-    return {"RSI": "55.1", "SMA_20": "in uptrend", "SMA_50": "flat", "Volume": "increasing"}
+    return {
+        "RSI": "55.1",
+        "SMA_20": "in uptrend",
+        "SMA_50": "flat",
+        "Volume": "increasing",
+    }
 
 
 # ===== Context macroeconomic demo (poți integra API știri macro/Evenimente) =====
@@ -609,14 +621,21 @@ Respond ONLY with compact JSON, no text outside JSON, matching exactly:
                     # ultimă încercare: caută orice cheie "expected..." cu un număr
                     if percent is None:
                         m = re.search(
-                            r'"expected[^"]*"\s*:\s*([+\-\u2212]?\d+(?:[.,]\d+)?)', answer, re.I
+                            r'"expected[^"]*"\s*:\s*([+\-\u2212]?\d+(?:[.,]\d+)?)',
+                            answer,
+                            re.I,
                         )
                         if m:
                             percent = _to_float_safe(m.group(1))
 
                 if probability is None:
                     logger.warning(f"[{symbol}] JSON missing 'probability' – trying alt keys.")
-                    for k in ("prob", "prob_pct", "probability_pct", "probabilityPercent"):
+                    for k in (
+                        "prob",
+                        "prob_pct",
+                        "probability_pct",
+                        "probabilityPercent",
+                    ):
                         if k in data and data.get(k) not in (None, ""):
                             probability = _to_float_safe(data.get(k))
                             if probability is not None:
@@ -655,7 +674,9 @@ Respond ONLY with compact JSON, no text outside JSON, matching exactly:
 
                 # Expected Change (%)
                 percent = extract(
-                    "Expected Change", rf"Expected\s*Change[^\n]*?:\s*{NUM}\s*%?", _to_float_safe
+                    "Expected Change",
+                    rf"Expected\s*Change[^\n]*?:\s*{NUM}\s*%?",
+                    _to_float_safe,
                 )
                 if percent is None:
                     m = re.search(rf"Expected[^\n]*?{NUM}\s*%", answer, re.I | re.S)
@@ -664,7 +685,9 @@ Respond ONLY with compact JSON, no text outside JSON, matching exactly:
 
                 # Probability (%)
                 m = re.search(
-                    rf"Probability[^\n]*?:\s*{NUM}\s*%?(?:\s*[-–—]\s*(.*))?", answer, re.I | re.S
+                    rf"Probability[^\n]*?:\s*{NUM}\s*%?(?:\s*[-–—]\s*(.*))?",
+                    answer,
+                    re.I | re.S,
                 )
                 if m:
                     probability = _to_float_safe(m.group(1))
@@ -698,7 +721,7 @@ Respond ONLY with compact JSON, no text outside JSON, matching exactly:
                 if reco and "-" in reco:
                     rec_badge, rec_reason = reco.split("-", 1)
                 else:
-                    rec_badge, rec_reason = (reco.strip() if reco else ""), ""
+                    _rec_badge, _rec_reason = (reco.strip() if reco else ""), ""
 
                     # --- Normalizări finale (clamp) înainte de return ---
             if probability is not None:
@@ -849,7 +872,7 @@ def batch_process(symbols, batch_size=20, force_refresh=False):
                             if live_price is not None
                             else getattr(recent_prediction, "actual_price", None)
                         ),
-                        "date_pred": last_ts.strftime("%Y-%m-%d %H:%M") if last_ts else None,
+                        "date_pred": (last_ts.strftime("%Y-%m-%d %H:%M") if last_ts else None),
                         # intervale/cuantile dacă există în DB
                         "ci_low_pct": getattr(recent_prediction, "ci_low_pct", None),
                         "ci_high_pct": getattr(recent_prediction, "ci_high_pct", None),
@@ -1014,7 +1037,9 @@ def batch_process(symbols, batch_size=20, force_refresh=False):
 
                         # cap volatilitate 3σ * sqrt(7) (heuristic)
                         try:
-                            from .features import daily_vol_pct  # import local, dacă există
+                            from .features import (
+                                daily_vol_pct,
+                            )  # import local, dacă există
 
                             sigma = daily_vol_pct(symbol, lookback=20) or 0.0
                             if sigma:
@@ -1072,7 +1097,12 @@ def batch_process(symbols, batch_size=20, force_refresh=False):
                     sigma_d, earn_days = 0.0, None
 
                 pct_final, p_final, rec_override = _apply_policy_rules(
-                    symbol, pct_final, p_final, ai_data.get("reward_to_risk"), earn_days, sigma_d
+                    symbol,
+                    pct_final,
+                    p_final,
+                    ai_data.get("reward_to_risk"),
+                    earn_days,
+                    sigma_d,
                 )
                 if rec_override:
                     ai_data["recommendation"] = rec_override
@@ -1086,7 +1116,7 @@ def batch_process(symbols, batch_size=20, force_refresh=False):
                         "explanation": ai_data.get("ai_full_text") or "",
                         "cached": False,
                         "probability": float(p_final) if p_final is not None else None,
-                        "final_probability": float(p_final) if p_final is not None else None,
+                        "final_probability": (float(p_final) if p_final is not None else None),
                         "reward_to_risk": ai_data.get("reward_to_risk"),
                         "trade_outcome": ai_data.get("trade_outcome"),
                         "recommendation": ai_data.get("recommendation"),
@@ -1129,8 +1159,8 @@ def batch_process(symbols, batch_size=20, force_refresh=False):
                         short_justification=ai_data.get("short_justification"),
                         ai_full_text=ai_data.get("ai_full_text") or "",
                         actual_price=actual_price,
-                        final_percent=float(pct_final) if pct_final is not None else None,
-                        final_probability=float(p_final) if p_final is not None else None,
+                        final_percent=(float(pct_final) if pct_final is not None else None),
+                        final_probability=(float(p_final) if p_final is not None else None),
                         ci_low_pct=ci_low_pct,
                         ci_high_pct=ci_high_pct,
                         p20=p20,
@@ -1145,8 +1175,10 @@ def batch_process(symbols, batch_size=20, force_refresh=False):
 
                 # --------- rezultat pentru UI ----------
                 out = {
-                    "percent": float(pct_final) if pct_final is not None else float(pct_llm),
-                    "final_percent": float(pct_final) if pct_final is not None else float(pct_llm),
+                    "percent": (float(pct_final) if pct_final is not None else float(pct_llm)),
+                    "final_percent": (
+                        float(pct_final) if pct_final is not None else float(pct_llm)
+                    ),
                     "explanation": ai_data.get("ai_full_text") or "",
                     "cached": False,
                     "probability": (

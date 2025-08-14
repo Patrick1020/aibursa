@@ -32,7 +32,10 @@ from pathlib import Path
 try:
     from openai import OpenAI
 except Exception:
-    print("[FATAL] Nu pot importa openai. Instalează: pip install openai>=1.30", file=sys.stderr)
+    print(
+        "[FATAL] Nu pot importa openai. Instalează: pip install openai>=1.30",
+        file=sys.stderr,
+    )
     raise
 
 from dotenv import load_dotenv
@@ -42,7 +45,12 @@ load_dotenv()  # încarcă variabilele din .env în os.environ
 STATE_PATH = pathlib.Path("scripts/.assistant_state.json").resolve()
 
 # --- File Search: excluderi + stub-uri pentru CSV ---
-EXCLUDE_FILESEARCH_EXTS = {".xlsx", ".xls", ".parquet", ".feather"}  # CSV îl tratăm special
+EXCLUDE_FILESEARCH_EXTS = {
+    ".xlsx",
+    ".xls",
+    ".parquet",
+    ".feather",
+}  # CSV îl tratăm special
 CSV_STUB_MAX_ROWS = 30  # câte rânduri din CSV includem în stub
 CSV_STUB_DIR = Path(__file__).parent / "_retrieval_stubs"
 CSV_STUB_DIR.mkdir(parents=True, exist_ok=True)
@@ -459,7 +467,10 @@ def read_instructions(path: Optional[str]) -> str:
         return default
     p = pathlib.Path(path)
     if not p.exists():
-        print(f"[WARN] Fișierul de instrucțiuni nu există: {p}. Folosesc default.", file=sys.stderr)
+        print(
+            f"[WARN] Fișierul de instrucțiuni nu există: {p}. Folosesc default.",
+            file=sys.stderr,
+        )
         return default
     try:
         return p.read_text(encoding="utf-8")
@@ -473,7 +484,9 @@ def parse_args() -> argparse.Namespace:
         description="Bootstrap Assistants API + File Search (Vector Stores)"
     )
     ap.add_argument(
-        "--root", default=".", help="Rădăcina proiectului pentru scanare fișiere (default: .)"
+        "--root",
+        default=".",
+        help="Rădăcina proiectului pentru scanare fișiere (default: .)",
     )
     ap.add_argument(
         "--include",
@@ -486,10 +499,15 @@ def parse_args() -> argparse.Namespace:
         help=f"Pattern-uri/foldere excluse (CSV). Default: {DEFAULT_EXCLUDE}",
     )
     ap.add_argument(
-        "--max-files", type=int, default=None, help="Limitează numărul de fișiere (debug)."
+        "--max-files",
+        type=int,
+        default=None,
+        help="Limitează numărul de fișiere (debug).",
     )
     ap.add_argument(
-        "--vector-store-id", default=None, help="Refolosește un Vector Store existent (ID)."
+        "--vector-store-id",
+        default=None,
+        help="Refolosește un Vector Store existent (ID).",
     )
     ap.add_argument("--assistant-id", default=None, help="Refolosește un Assistant existent (ID).")
     ap.add_argument("--name", default="StockApp Engineer", help="Numele Assistant-ului.")

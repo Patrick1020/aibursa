@@ -41,7 +41,13 @@ def main():
     # 3) poll până se termină
     while True:
         run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-        if run.status in ("completed", "failed", "cancelled", "expired", "requires_action"):
+        if run.status in (
+            "completed",
+            "failed",
+            "cancelled",
+            "expired",
+            "requires_action",
+        ):
             break
         time.sleep(0.8)
 

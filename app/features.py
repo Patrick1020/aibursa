@@ -38,7 +38,7 @@ def days_to_next_earnings(symbol: str) -> int | None:
     """Uses yfinance calendar when available."""
     try:
         t = yf.Ticker(symbol)
-        cal = t.get_income_stmt(freq="quarterly")  # forces metadata load
+        t.get_income_stmt(freq="quarterly")  # forces metadata load
         # yfinance exposes earnings dates through 't.calendar' or 't.get_earnings_dates'
         dates = t.get_earnings_dates(limit=8)
         future = dates[dates.index >= pd.Timestamp.utcnow().tz_localize("UTC")]
@@ -125,7 +125,8 @@ def _atr(df: pd.DataFrame, period: int = 14):
     high, low, close = df["High"], df["Low"], df["Close"]
     prev_close = close.shift(1)
     tr = pd.concat(
-        [(high - low).abs(), (high - prev_close).abs(), (low - prev_close).abs()], axis=1
+        [(high - low).abs(), (high - prev_close).abs(), (low - prev_close).abs()],
+        axis=1,
     ).max(axis=1)
     return tr.rolling(period, min_periods=period).mean()
 
@@ -194,7 +195,7 @@ def _regime_at(date_utc: dt.datetime):
     vix_d5 = float(vix_close.iloc[vidx] - vix_close.iloc[max(0, vidx - 5)]) if vidx >= 1 else 0.0
 
     # TNX nivel (aprox. yield 10y *10)
-    tnx_now = _val(tnx, "Close")
+    _val(tnx, "Close")
 
     # 3 valori numerice
     return [
@@ -217,8 +218,8 @@ def build_features_for_date(symbol: str, asof: dt.datetime):
 
         df = df.copy()
         close = df["Close"].astype(float)
-        high = df["High"].astype(float)
-        low = df["Low"].astype(float)
+        df["High"].astype(float)
+        df["Low"].astype(float)
         vol = df["Volume"].astype(float)
         c = float(close.iloc[-1])
 
@@ -455,8 +456,8 @@ def make_live_features(symbol: str) -> dict:
         return {}
 
     close = df["Close"].copy()
-    high = df["High"].copy()
-    low = df["Low"].copy()
+    df["High"].copy()
+    df["Low"].copy()
 
     rets = close.pct_change() * 100.0  # % points / zi
     mkt_close = df_mkt["Close"].copy()

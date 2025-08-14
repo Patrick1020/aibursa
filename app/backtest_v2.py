@@ -353,10 +353,12 @@ class Backtester:
                 continue
 
             pct_pred = _safe_float(
-                getattr(r, "final_percent", None), _safe_float(getattr(r, "estimated_change", None))
+                getattr(r, "final_percent", None),
+                _safe_float(getattr(r, "estimated_change", None)),
             )
             p_final = _safe_float(
-                getattr(r, "final_probability", None), _safe_float(getattr(r, "probability", None))
+                getattr(r, "final_probability", None),
+                _safe_float(getattr(r, "probability", None)),
             )
             ci_low = _safe_float(
                 getattr(r, "ci_low_pct", None), _safe_float(getattr(r, "p20", None))
@@ -682,7 +684,10 @@ a.btn {{ display:inline-block; background:#23305b; color:#6cd4ff; padding:9px 14
             # selectăm best: maximăm hit_rate, apoi trades, apoi avg_return
             best = (
                 tdf.dropna(subset=["hit_rate"])
-                .sort_values(["hit_rate", "trades", "avg_return"], ascending=[False, False, False])
+                .sort_values(
+                    ["hit_rate", "trades", "avg_return"],
+                    ascending=[False, False, False],
+                )
                 .head(1)
             )
             best_row = best.to_dict(orient="records")[0] if not best.empty else None
@@ -906,13 +911,22 @@ if __name__ == "__main__":
         "--limit", type=int, default=2000, help="Max number of predictions to evaluate"
     )
     parser.add_argument(
-        "--symbols", type=str, default="", help="Comma-separated symbols to filter (optional)"
+        "--symbols",
+        type=str,
+        default="",
+        help="Comma-separated symbols to filter (optional)",
     )
     parser.add_argument(
-        "--thr-abs", type=float, default=1.0, help="Abs pct threshold for toy strategy entry"
+        "--thr-abs",
+        type=float,
+        default=1.0,
+        help="Abs pct threshold for toy strategy entry",
     )
     parser.add_argument(
-        "--thr-prob", type=float, default=0.60, help="Probability threshold (0..1) for toy strategy"
+        "--thr-prob",
+        type=float,
+        default=0.60,
+        help="Probability threshold (0..1) for toy strategy",
     )
 
     args = parser.parse_args()

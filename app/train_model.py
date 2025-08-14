@@ -209,7 +209,11 @@ def _download_hist(sym: str, years: int = YEARS_HISTORY) -> pd.DataFrame:
                     df = yf.Ticker(sym).history(period=period, interval="1d", auto_adjust=True)
                 else:
                     df = yf.download(
-                        sym, period=period, interval="1d", auto_adjust=True, progress=False
+                        sym,
+                        period=period,
+                        interval="1d",
+                        auto_adjust=True,
+                        progress=False,
                     )
 
                 if isinstance(df, pd.DataFrame) and not df.empty:
@@ -664,7 +668,7 @@ def main():
     years_default = YEARS_HISTORY
     horizon_default = HORIZON_DAYS
     tickers_default = ",".join(TICKERS)
-    excess_default = int(USE_EXCESS_TARGET)
+    int(USE_EXCESS_TARGET)
 
     parser = argparse.ArgumentParser()
     # === Excess vs SPY flags (nice CLI) ===
@@ -686,7 +690,10 @@ def main():
         "--years", type=int, default=years_default, help="Ani de istoric Yahoo Finance."
     )
     parser.add_argument(
-        "--horizon", type=int, default=horizon_default, help="Orizontul țintei, în zile."
+        "--horizon",
+        type=int,
+        default=horizon_default,
+        help="Orizontul țintei, în zile.",
     )
     parser.add_argument(
         "--tickers",

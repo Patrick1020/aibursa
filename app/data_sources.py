@@ -140,7 +140,9 @@ def _yf_cached_download(ticker: str, period: str = "6mo", interval: str = "1d") 
             if not df.empty:
                 df.index = pd.to_datetime(df["Date"])
                 df.drop(
-                    columns=[c for c in ["Date"] if c in df.columns], inplace=True, errors="ignore"
+                    columns=[c for c in ["Date"] if c in df.columns],
+                    inplace=True,
+                    errors="ignore",
                 )
                 return df
         except Exception:

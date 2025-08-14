@@ -37,10 +37,16 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_historical_impacts_id"), "historical_impacts", ["id"], unique=False)
     op.create_index(
-        op.f("ix_historical_impacts_news_date"), "historical_impacts", ["news_date"], unique=False
+        op.f("ix_historical_impacts_news_date"),
+        "historical_impacts",
+        ["news_date"],
+        unique=False,
     )
     op.create_index(
-        op.f("ix_historical_impacts_symbol"), "historical_impacts", ["symbol"], unique=False
+        op.f("ix_historical_impacts_symbol"),
+        "historical_impacts",
+        ["symbol"],
+        unique=False,
     )
     # ### end Alembic commands ###
 
