@@ -1,0 +1,45 @@
+name: Ops (train/backtest/refresh) via FastAPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      op:
+        description: "Operation"
+        required: true
+        default: "refresh"
+        type: choice
+        options: [ "train", "backtest", "refresh" ]
+      years:
+        description: "Train: years history"
+        required: false
+        default: "8"
+      horizon:
+        description: "Horizon days"
+        required: false
+        default: "7"
+      tickers:
+        description: "Tickers (int) or 'auto'"
+        required: false
+        default: "15"
+
+jobs:
+  run-op:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call FastAPI op
+        env:
+          API_KEY: ${{ secrets.OPS_API_KEY }}
+          BASE_URL: ${{ secrets.NGROK_BASE }}   # ex: https://abc123.ngrok-free.app
+          OP:      ${{ inputs.op }}
+          YEARS:   ${{ inputs.years }}
+          HORIZON: ${{ inputs.horizon }}
+          TICKERS: ${{ inputs.tickers }}
+        run: |
+          set -e
+          if [ "$OP" = "train" ]; then
+            curl -sS -X POST "$BASE_URL/ops/train?years=$YEARS&horizon=$HORIZON&tickers=$TICKERS" -H "X-API-Key: $API_KEY"
+          elif [ "$OP" = "backtest" ]; then
+            curl -sS -X POST "$BASE_URL/ops/backtest?horizon_days=$HORIZON" -H "X-API-Key: $API_KEY"
+          else
+            curl -sS -X POST "$BASE_URL/ops/refresh_all" -H "X-API-Key: $API_KEY"
+          fi

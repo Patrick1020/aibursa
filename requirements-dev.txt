@@ -1,0 +1,5 @@
+ruff==0.5.5
+black==24.4.2
+pytest==8.3.2
+pre-commit==3.8.0
+nox==2024.4.15

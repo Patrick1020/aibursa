@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.cache/
+.ipynb_checkpoints/
+
+# Venv
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Artefacte & date locale
+models_store/
+data/
+logs/
+static/backtest_*.png
+static/backtest_*.csv
+static/backtest_*.html
+
+# Build / Dist
+build/
+dist/
+*.whl
+*.spec
+
+# OS
+.DS_Store
+Thumbs.db
+
+# venv & cache
+.venv/
+__pycache__/
+
+# logs & baze de date locale
+*.log
+*.sqlite
+*.db
+app.log
+news_history.json
+
+# modele & rezultate generate
+models/
+models_store/
+static/bt_*.png
+static/backtest_*.png
+static/backtest_*.csv
+static/backtest_*.html
+
+# date brute/CSV cache
+data_cache/
+
+# fișiere temporare
+*.tmp
+*.bak
+
+# config local
+.env

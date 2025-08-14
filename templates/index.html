@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Stock Predictions Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+    <header>
+        <h1>Stock Predictions Dashboard</h1>
+        <form method="get">
+            <input type="text" name="q" placeholder="Search symbol..." value="{{ query }}" />
+            <button type="submit">Search</button>
+        </form>
+        <p>{{ count }} din {{ total }} stocks shown</p>
+        <a href="/backtest-pro" class="btn-dashboard">Backtest Pro</a>
+        <!-- dacă păstrezi legacy: -->
+        <a href="/backtest-dashboard" class="btn-dashboard">Backtest (legacy)</a>
+        <button class="toggle-dark" id="toggle-dark">🌙 Dark Mode</button>
+        <button id="refresh-all" style="margin-left:25px;">🔄 Refresh All</button>
+        <span id="refresh-status"></span>
+    </header>
+    <table>
+    <thead>
+        <tr>
+            <th>Symbol</th>
+            <th>Current Price</th>
+            <th>Prediction (%)</th>
+            <th>Est. Price (7d)</th>
+            <th>CI (P20–P80)</th>
+            <th>Price Band</th>
+            <th>Probability</th>
+            <th>Win/Loss/Break</th>
+            <th>Reward/Risk</th>
+            <th>Buy/Hold/Sell</th>
+            <th>Date</th>
+            <th>Details</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for data in results %}
+        <tr title="{{ data.short_justification or '' }}">
+            <td>{{ data.symbol }}</td>
+            <td>{{ '%.2f' % data.actual_price if data.actual_price else '-' }}</td>
+            <td>
+                {% if data.percent is not none %}
+                    {{ '%.2f' % data.percent }}%
+                {% else %}-{% endif %}
+            </td>
+            <td>
+            {% if data.actual_price is not none %}
+                {% set mid = (data.actual_price * (1 + (data.percent or 0)/100)) if data.percent is not none else None %}
+                {% if data.ci_low_pct is not none and data.ci_high_pct is not none %}
+                {% set low = data.actual_price * (1 + data.ci_low_pct/100) %}
+                {% set high = data.actual_price * (1 + data.ci_high_pct/100) %}
+                <span class="tooltip-parent">
+                    {{ '%.2f' % low }} – {{ '%.2f' % high }}
+                    <span class="tooltip">
+                    Interval 7d (~P20–P80) pe baza volatilității.
+                    {% if data.percent is not none %}<br/>Mid: {{ '%.2f' % mid }}{% endif %}
+                    </span>
+                </span>
+                {% elif mid is not none %}
+                {{ '%.2f' % mid }}
+                {% else %}
+                -
+                {% endif %}
+            {% else %}-{% endif %}
+            </td>
+
+            <td>
+                {% if data.ci_low_pct is not none and data.ci_high_pct is not none %}
+                    {{ '%.2f' % data.ci_low_pct }}% → {{ '%.2f' % data.ci_high_pct }}%
+                {% else %}-{% endif %}
+            </td>
+            <td>
+                {% if data.price_low is not none and data.price_high is not none %}
+                    {{ '%.2f' % data.price_low }} → {{ '%.2f' % data.price_high }}
+                {% else %}-{% endif %}
+            </td>
+
+            <td>
+                {% if data.probability is not none %}
+                    <div class="prob-bar-bg tooltip-parent" title="{{ data.prob_justification or '' }}">
+                        <div class="prob-bar" style="width:{{ data.probability|int }}%;">{{ data.probability|int }}%</div>
+                        {% if data.prob_justification %}
+                        <span class="tooltip">{{ data.prob_justification }}</span>
+                        {% endif %}
+                    </div>
+                {% else %}-{% endif %}
+            </td>
+            <td>
+                {% if data.trade_outcome %}
+                    <!-- Win/Loss/Break badge cu tooltip -->
+                    <span class="badge-{{ data.trade_outcome|lower }} tooltip-parent">
+                        {{ data.trade_outcome }}
+                        {% if data.short_justification %}
+                        <span class="tooltip">{{ data.short_justification }}</span>
+                        {% endif %}
+                    </span>
+                {% else %}-{% endif %}
+            </td>
+            <td>
+                {% if data.reward_to_risk is not none %}
+                    <span class="badge-rr">{{ data.reward_to_risk }}</span>
+                {% else %}-{% endif %}
+            </td>
+            <td>
+                {% if data.recommendation %}
+                    <span class="badge-{{ data.recommendation|lower }} tooltip-parent">
+                        {{ data.recommendation }}
+                        {% if data.reco_reason %}
+                        <span class="tooltip">{{ data.reco_reason }}</span>
+                        {% endif %}
+                    </span>
+                {% else %}-{% endif %}
+            </td>
+            <td>{{ data.date_pred or '-' }}</td>
+            <td>
+                <a href="/stock/{{ data.symbol }}" class="details-btn" title="Detalii & justificare completă">🔎</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+    <script>
+const btn = document.getElementById('toggle-dark');
+const body = document.body;
+function setDark(dark) {
+    if (dark) { body.classList.add('dark'); localStorage.setItem('theme', 'dark'); btn.innerHTML = '☀️ Light Mode'; }
+    else { body.classList.remove('dark'); localStorage.setItem('theme', 'light'); btn.innerHTML = '🌙 Dark Mode'; }
+}
+btn.onclick = () => setDark(!body.classList.contains('dark'));
+if (localStorage.getItem('theme') === 'dark') setDark(true);
+
+document.getElementById("refresh-all").onclick = async function () {
+  const btn = this;
+  const statusEl = document.getElementById('refresh-status');
+
+  // 1) UI: lock + mesaj
+  btn.disabled = true;
+  btn.innerText = "Refreshing…";
+  statusEl.textContent = "";
+
+  // 2) Colectează simbolurile din tabel (fără duplicate)
+  const symbols = Array.from(document.querySelectorAll('tbody tr td:first-child'))
+    .map(td => td.textContent.trim())
+    .filter(s => s.length > 0);
+  const uniqueSymbols = [...new Set(symbols)];
+
+  // 3) Timeout de siguranță (2 min)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+  try {
+    const resp = await fetch("/api/refresh_all", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ symbols: uniqueSymbols }),
+      signal: controller.signal
+    });
+
+    let json;
+    try { json = await resp.json(); } catch { json = {}; }
+
+    if (!resp.ok || (json.status && json.status !== "ok")) {
+      const msg = (json && (json.message || json.error)) || `HTTP ${resp.status}`;
+      throw new Error(msg);
+    }
+
+    // 4) UI: sumar rezultate
+    const okCount = json.ok ?? json.count ?? 0;
+    const failed = Array.isArray(json.failed) ? json.failed : [];
+    const failedText = failed.length ? ` (failed: ${failed.join(", ")})` : "";
+
+    btn.innerText = "Done!";
+    statusEl.textContent = `Recalculate: ${okCount}/${uniqueSymbols.length} ok${failedText}`;
+
+    // 5) Reîncărcare ușoară ca să vezi noile valori
+    setTimeout(() => {
+      btn.innerText = "🔄 Refresh All";
+      btn.disabled = false;
+      location.reload();
+    }, 1400);
+
+  } catch (e) {
+    // Anulat de timeout sau altă eroare
+    btn.innerText = "Error!";
+    statusEl.textContent = `Eroare la refresh: ${e && e.message ? e.message : "necunoscută"}`;
+    setTimeout(() => {
+      btn.innerText = "🔄 Refresh All";
+      btn.disabled = false;
+    }, 2000);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
+</script>
+</body>
+</html>

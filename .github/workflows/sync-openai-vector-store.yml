@@ -1,0 +1,44 @@
+name: Sync OpenAI Vector Store
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install openai tiktoken python-dotenv
+
+      - name: Sync to OpenAI Vector Store
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          VECTOR_STORE_ID: ${{ secrets.VECTOR_STORE_ID }}
+        run: |
+          python - <<'PY'
+          import os, glob
+          from openai import OpenAI
+
+          api_key = os.environ["OPENAI_API_KEY"]
+          vs_id = os.environ["VECTOR_STORE_ID"]
+          client = OpenAI(api_key=api_key)
+
+          exts = (".py",".md",".sql",".json",".yml",".yaml",".toml",
+                  ".html",".ts",".tsx",".ipynb",".txt")
+          blocked = ("__pycache__", "/.git/", "/.venv/", "/models_store/", "/data/", "/logs/")
+
+          def allowed(p: str) -> bool:
+            if not p.endswith(exts): return False
+            return not any(b in p for b in blocked)
+
+          paths = [p for p in glob.glob("**/*", recursive=True) if allowed(p)]
+
+          files = [open(p,"rb") for p in paths]
+          client.vector_stores.file_batches.upload_and_poll(
+              vector_store_id=vs_id,
+              files=files
+          )
+          print(f"Synced {len(paths)} files to vector store {vs_id}")
+          PY

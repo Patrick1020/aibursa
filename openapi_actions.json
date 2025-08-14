@@ -1,0 +1,23 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "StockApp Ops", "version": "1.0.0" },
+  "servers": [{ "url": "https://4922d40c0791.ngrok-free.app" }],
+  "paths": {
+    "/ops/train": { "post": { "summary": "Train models", "parameters": [
+      { "name": "years", "in": "query", "schema": {"type":"integer"} },
+      { "name": "horizon", "in": "query", "schema": {"type":"integer"} },
+      { "name": "tickers", "in": "query", "schema": {"type":"integer"} },
+      { "name": "excess_target", "in": "query", "schema": {"type":"boolean"} }
+    ], "responses": { "200": { "description": "OK" } } } },
+    "/ops/backtest": { "post": { "summary": "Run backtest pro", "parameters": [
+      { "name": "horizon_days", "in": "query", "schema": {"type":"integer"} }
+    ], "responses": { "200": { "description": "OK", "content": {"text/html":{}} } } } },
+    "/ops/refresh_all": { "post": { "summary": "Refresh all predictions", "responses": { "200": { "description": "OK" } } } }
+  },
+  "components": {
+    "securitySchemes": {
+      "api_key": { "type": "apiKey", "in": "header", "name": "X-API-Key" }
+    }
+  },
+  "security": [{ "api_key": [] }]
+}

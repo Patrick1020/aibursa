@@ -1,0 +1,31 @@
+name: Train & Upload Models
+
+on:
+  workflow_dispatch:
+    inputs:
+      years:
+        default: "8"
+      horizon:
+        default: "7"
+      tickers:
+        default: "30"
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Train
+        run: |
+          python -m app.train_model --years ${{ inputs.years }} --horizon ${{ inputs.horizon }} --tickers ${{ inputs.tickers }} --excess_target true
+      - name: Upload models_store as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: models_store
+          path: models_store/*

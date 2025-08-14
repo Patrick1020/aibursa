@@ -1,0 +1,8 @@
+{
+  "vector_store_id": "vs_689d2fb543848191aeb4c40226882476",
+  "assistant_id": "asst_mqWArxgjt1g3mlSPg6wnMWpx",
+  "model": "gpt-4o",
+  "root": "C:\\Users\\patri\\OneDrive\\Desktop\\aibursa",
+  "include": ".py,.md,.txt,.json,.yaml,.yml,.html,.htm,.css,.js,.ts,.tsx,.sql,.ipynb,.csv",
+  "exclude": ".git,.venv,__pycache__,node_modules,dist,build,models_store,.idea,.vscode,*.pkl,*.joblib,*.onnx,*.bin,*.pt,*.weights"
+}

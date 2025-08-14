@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Stock Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <style>
+        body { background: #101624; color: #f0f2fa; font-family: 'Segoe UI', Arial, sans-serif; }
+        .table-container { max-width: 1200px; margin: 30px auto; background: #171e2c; border-radius: 14px; box-shadow: 0 2px 18px #0006; padding: 28px 22px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 9px; }
+        th { background: #23305b; color: #6cd4ff; }
+        tr { border-bottom: 1px solid #22263c; }
+        tr.positive { background: #1a2b18; }
+        tr.negative { background: #301c1c; }
+        tr.neutral  { background: #22263c; }
+        .badge { padding: 2px 7px; border-radius: 6px; font-size: 0.85em; margin-left: 6px;}
+        .badge-buy { background: #1aeb6a33; color: #00d26a; border: 1px solid #00d26a; }
+        .badge-sell { background: #ff2c3933; color: #ff2c39; border: 1px solid #ff2c39; }
+        .badge-hold { background: #ffd02e33; color: #ffd02e; border: 1px solid #ffd02e; }
+        .badge-cached { background: #004fff33; color: #2bb3ff; border: 1px solid #2bb3ff; }
+        .badge-rr { background: #212a42; color: #6cd4ff; border: 1px solid #23305b; }
+        pre { white-space: pre-line; font-family: inherit; background: #192132; border-radius: 8px; padding: 6px 8px;}
+        .symbol-link { color: #6cd4ff; text-decoration: underline; cursor: pointer;}
+        .flex-badges { display: flex; flex-wrap: wrap; gap: 7px; }
+    </style>
+</head>
+<body>
+    <div class="table-container">
+        <h2>Stock AI Dashboard</h2>
+
+        <form method="get" style="margin-bottom: 18px;">
+            <input type="text" name="symbol" placeholder="Filtru simbol..." value="{{ filter }}" style="padding: 7px; border-radius: 6px; border: 1px solid #22263c;" />
+            <button type="submit" style="padding: 7px 13px; border-radius: 6px; background: #22263c; color: #6cd4ff;">Caută</button>
+            <span style="float:right; font-size:0.97em;">Total: {{ total }}</span>
+        </form>
+        <table>
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Prediction</th>
+                    <th>Explanation</th>
+                    <th>Badges</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in predictions %}
+                <tr class="{% if item.estimated_change > 0 %}positive{% elif item.estimated_change < 0 %}negative{% else %}neutral{% endif %}">
+                    <td>
+                        <a class="symbol-link" href="/stock/{{ item.symbol }}">{{ item.symbol }}</a>
+                    </td>
+                    <td>{{ '%.2f' % item.estimated_change }}%</td>
+                    <td><pre>{{ item.analysis }}</pre></td>
+                    <td>
+                        <div class="flex-badges">
+                            {% if item.estimated_change > 1 %}
+                                <span class="badge badge-buy">BUY</span>
+                            {% elif item.estimated_change < -1 %}
+                                <span class="badge badge-sell">SELL</span>
+                            {% else %}
+                                <span class="badge badge-hold">HOLD</span>
+                            {% endif %}
+                            {% if item.analysis and "cached" in item.analysis.lower() %}
+                                <span class="badge badge-cached">CACHED</span>
+                            {% endif %}
+                            {% if item.reward_to_risk %}
+                                <span class="badge badge-rr">R/R: {{ '%.2f' % item.reward_to_risk }}</span>
+                            {% endif %}
+                            {% if item.probability is not none %}
+                                <span class="badge badge-rr">{{ item.probability|int }}%</span>
+                            {% endif %}
+                            {% if item.recommendation %}
+                                <span class="badge badge-{{ item.recommendation|lower }}">{{ item.recommendation }}</span>
+                            {% endif %}
+                            {% if item.trade_outcome %}
+                                <span class="badge badge-{{ item.trade_outcome|lower }}">{{ item.trade_outcome }}</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>{{ item.published_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <button onclick="refreshSymbol('{{ item.symbol }}', this)">Force Refresh</button>
+                    </td>
+                </tr>
+
+
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+<script>
+function refreshSymbol(symbol, btn) {
+    btn.disabled = true;
+    btn.textContent = "Refreshing...";
+    fetch('/api/refresh/' + symbol, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.percent !== undefined) {
+            alert('Noua predicție pentru ' + symbol + ': ' + data.percent + '%\n\n' + data.explanation);
+            // Poți face și un reload() dacă vrei să reîncarci pagina după refresh:
+            // location.reload();
+        } else {
+            alert('A apărut o eroare la refresh.');
+        }
+    })
+    .catch(() => alert('Eroare rețea sau server!'))
+    .finally(() => {
+        btn.disabled = false;
+        btn.textContent = "Force Refresh";
+    });
+}
+</script>
+
+</body>
+</html>

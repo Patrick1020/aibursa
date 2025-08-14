@@ -1,0 +1,42 @@
+name: Nightly Sync + Optional Backtest
+
+on:
+  schedule:
+    - cron: "15 1 * * *"   # 01:15 UTC, zilnic
+  workflow_dispatch:
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install openai tiktoken
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Sync Vector Store
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          VECTOR_STORE_ID: ${{ secrets.VECTOR_STORE_ID }}
+        run: |
+          python - <<'PY'
+          import os, glob
+          from openai import OpenAI
+          client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+          vs_id = os.environ["VECTOR_STORE_ID"]
+          exts = (".py",".md",".sql",".json",".yml",".yaml",".toml",".html",".ts",".tsx",".ipynb",".txt")
+          paths = [p for p in glob.glob("**/*", recursive=True) if p.endswith(exts)]
+          files = [open(p,"rb") for p in paths]
+          client.vector_stores.file_batches.upload_and_poll(vector_store_id=vs_id, files=files)
+          print("Synced nightly.")
+          PY
+
+      - name: Optional Backtest via API
+        if: ${{ secrets.NGROK_BASE != '' && secrets.OPS_API_KEY != '' }}
+        env:
+          API_KEY: ${{ secrets.OPS_API_KEY }}
+          BASE_URL: ${{ secrets.NGROK_BASE }}
+        run: |
+          curl -sS -X POST "$BASE_URL/ops/backtest?horizon_days=7" -H "X-API-Key: $API_KEY" || true
